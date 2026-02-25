@@ -116,26 +116,22 @@ async function handleDeepLink(userId, questionId) {
   if (!question) throw new Error("Question not found");
 
   const moduleIdStr = question.moduleId.toString();
-  const moduleState = userState.moduleStates.get(moduleIdStr);
+  let moduleState = userState.moduleStates[moduleIdStr];
 
-  // If user visited this module and question is in stack
-  if (moduleState && moduleState.stack.includes(questionId)) {
-    return question;
+  if (!moduleState) {
+    moduleState = { stack: [], lastCheckpointQuestionId: null };
+    userState.moduleStates[moduleIdStr] = moduleState;
   }
 
-  // If user visited module, return last question in stack
-  if (moduleState && moduleState.stack.length > 0) {
-    const lastQuestionId = moduleState.stack[moduleState.stack.length - 1];
-    return Question.findById(lastQuestionId);
+  if (moduleState.stack.includes(questionId)) return question;
+
+  if (moduleState.stack.length > 0) {
+    const lastQId = moduleState.stack[moduleState.stack.length - 1];
+    return await Question.findById(lastQId);
   }
 
-  // Otherwise return current question
-  if (userState.currentQuestionId) {
-    return Question.findById(userState.currentQuestionId);
-  }
-
-  // If nothing found
-  return null;
+  const firstQuestion = await Question.findOne({ moduleId: moduleIdStr }).sort({ _id: 1 });
+  return firstQuestion;
 }
 
 /**
