@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const moduleSchema = new mongoose.Schema({
-  _id: String,                  
+  _id: String,                   // module ID as string
   name: { type: String, required: true },
-  startQuestionId: String       
+  startQuestionId: { type: String, ref: 'Question', required: true } // string reference
 });
 
 module.exports = mongoose.model('Module', moduleSchema);
